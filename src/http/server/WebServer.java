@@ -14,8 +14,8 @@ import java.util.Scanner;
 public class WebServer {
 
     protected static String EMPTY_RESSOURCE = "";
-    protected static String RESOURCE_PATH = "doc/";
-    protected static String INDEX_PATH = "doc/index.html";
+    protected static String RESOURCE_PATH = "//doc/";
+    protected static String INDEX_PATH = "//doc/index.html";
 
     /**
      * WebServer constructor.
@@ -24,7 +24,7 @@ public class WebServer {
         ServerSocket s;
         List<String> HTTP_METHODS = new ArrayList<>(Arrays.asList("GET", "POST", "PUT", "DELETE", "HEAD"));
 
-        System.out.println("Webserver starting up on port 80");
+        System.out.println("Webserver starting up on port 10533");
         System.out.println("(press ctrl-c to exit)");
 
         try {
@@ -45,7 +45,7 @@ public class WebServer {
                 //Opening input/output binary stream of client socket
                 BufferedReader in = new BufferedReader(new InputStreamReader(
                         remote.getInputStream()));
-                PrintWriter out = new PrintWriter(remote.getOutputStream());
+                BufferedOutputStream out = new BufferedOutputStream(remote.getOutputStream());
 
                 // read the data sent. We basically ignore it,
                 // stop reading once a blank line is hit. This
@@ -72,7 +72,7 @@ public class WebServer {
                 String http_method = header_decomposed[0];
 
                 if (!HTTP_METHODS.contains(http_method)) {
-                    out.println(buildResponseHeader("501", "Not Implemented"));
+                    out.write(buildResponseHeader("501", "Not Implemented").getBytes());
                     out.flush();
                     remote.close();
                 } else {
@@ -83,7 +83,7 @@ public class WebServer {
                         resource = INDEX_PATH;
                     }
                     if (!resource.startsWith(RESOURCE_PATH)) {
-                        out.println(buildResponseHeader("403", "Forbidden"));
+                        out.write(buildResponseHeader("403", "Forbidden").getBytes());
                     } else {
                         switch (http_method) {
                             case "GET":
@@ -134,8 +134,10 @@ public class WebServer {
             header += "Content-Type: video/x-msvideo";
         else if (filename.endsWith(".css"))
             header += "Content-Type: text/css";
-        else if (filename.endsWith(".pdf"))
+        else if (filename.endsWith(".pdf")) {
             header += "Content-Type: application/pdf";
+            System.out.println("Transaction sur fichier PDF");
+        }
         else if (filename.endsWith(".odt"))
             header += "Content-Type: application/vnd.oasis.opendocument.text";
         header += "\r\n";
@@ -155,25 +157,28 @@ public class WebServer {
      * @param out,      output flux to client socker
      * @param filename, filepath
      */
-    protected void httpGET(PrintWriter out, String filename) {
+    protected void httpGET(BufferedOutputStream out, String filename) {
         try {
             File file = new File(filename);
             if (!file.exists() || !file.isFile()) {
-                out.println(buildResponseHeader("404", "Not Found", filename, file.length()));
+                out.write(buildResponseHeader("404", "Not Found", filename, file.length()).getBytes());
             } else {
-                out.println(buildResponseHeader("200", "OK", filename, file.length()));
+                out.write(buildResponseHeader("200", "OK", filename, file.length()).getBytes());
                 //Read file
-                Scanner reader = new Scanner(file);
-                while (reader.hasNextLine()) {
-                    String data = reader.nextLine();
-                    out.write(data);
+
+                BufferedInputStream fileIn = new BufferedInputStream(new FileInputStream(file));
+                byte[] reader = new byte[256];
+                int nbRead;
+                while((nbRead = fileIn.read(reader)) != -1)
+                {
+                    out.write(reader, 0, nbRead);
                 }
-                reader.close();
+                fileIn.close();
             }
         } catch (Exception e) {
             e.printStackTrace();
             try {
-                out.write(buildResponseHeader("500", "Internal Server Error"));
+                out.write(buildResponseHeader("500", "Internal Server Error").getBytes());
                 out.flush();
             } catch (Exception e2) {
                 e2.printStackTrace();
@@ -193,7 +198,7 @@ public class WebServer {
      * @param out,      client socket output stream, to write response
      * @param filename, filepath
      */
-    protected void httpPUT(BufferedReader in, PrintWriter out, String filename) {
+    protected void httpPUT(BufferedReader in, BufferedOutputStream out, String filename) {
         try {
             File file = new File(filename);
             boolean has_existed = file.exists();
@@ -212,15 +217,15 @@ public class WebServer {
             fileOut.flush();
             fileOut.close();
             if (has_existed) {
-                out.println(buildResponseHeader("200", "OK", filename, file.length()));
+                out.write(buildResponseHeader("200", "OK", filename, file.length()).getBytes());
             } else {
-                out.println(buildResponseHeader("201", "Created",filename, file.length()));
+                out.write(buildResponseHeader("201", "Created",filename, file.length()).getBytes());
             }
             out.flush();
         } catch (Exception e) {
             e.printStackTrace();
             try {
-                out.write(buildResponseHeader("500", "Internal Server Error"));
+                out.write(buildResponseHeader("500", "Internal Server Error").getBytes());
                 out.flush();
             } catch (Exception e2) {
                 e2.printStackTrace();
@@ -238,7 +243,7 @@ public class WebServer {
      * @param out,      client socket output stream, to write response
      * @param filename, filepath
      */
-    protected void httpPOST(BufferedReader in, PrintWriter out, String filename) {
+    protected void httpPOST(BufferedReader in, BufferedOutputStream out, String filename) {
         try {
             File file = new File(filename);
             boolean has_existed = file.exists();
@@ -254,15 +259,15 @@ public class WebServer {
             fileOut.flush();
             fileOut.close();
             if (has_existed) {
-                out.println(buildResponseHeader("200", "OK", filename, file.length()));
+                out.write(buildResponseHeader("200", "OK", filename, file.length()).getBytes());
             } else {
-                out.println(buildResponseHeader("201", "Created", filename, file.length()));
+                out.write(buildResponseHeader("201", "Created", filename, file.length()).getBytes());
             }
             out.flush();
         } catch (Exception e) {
             e.printStackTrace();
             try {
-                out.write(buildResponseHeader("500", "Internal Server Error"));
+                out.write(buildResponseHeader("500", "Internal Server Error").getBytes());
                 out.flush();
             } catch (Exception e2) {
                 e2.printStackTrace();
@@ -280,24 +285,24 @@ public class WebServer {
      * @param out,      client socket output stream, to return header
      * @param filename, filepath
      */
-    protected void httpDELETE(PrintWriter out, String filename) {
+    protected void httpDELETE(BufferedOutputStream out, String filename) {
         try {
             File file = new File(filename);
             if (!file.exists() || !file.isFile()) {
-                out.println(buildResponseHeader("404", "Not Found"));
+                out.write(buildResponseHeader("404", "Not Found").getBytes());
             } else {
                 boolean deleted = file.delete();
                 if (deleted) {
-                    out.println(buildResponseHeader("204", "No Content",filename, file.length()));
+                    out.write(buildResponseHeader("204", "No Content",filename, file.length()).getBytes());
                 } else {
-                    out.println(buildResponseHeader("403", "Forbidden", filename, file.length()));
+                    out.write(buildResponseHeader("403", "Forbidden", filename, file.length()).getBytes());
                 }
             }
             out.flush();
         } catch (Exception e) {
             e.printStackTrace();
             try {
-                out.write(buildResponseHeader("500", "Internal Server Error"));
+                out.write(buildResponseHeader("500", "Internal Server Error").getBytes());
                 out.flush();
             } catch (Exception e2) {
                 e2.printStackTrace();
@@ -310,19 +315,19 @@ public class WebServer {
      * @param out, client socket output flux, to send header
      * @param filename, filepath
      */
-    protected void httpHEAD(PrintWriter out, String filename){
+    protected void httpHEAD(BufferedOutputStream out, String filename){
         try{
             File file = new File(filename);
             if (!file.exists() || !file.isFile()) {
-                out.println(buildResponseHeader("404", "Not Found", filename, file.length()));
+                out.write(buildResponseHeader("404", "Not Found", filename, file.length()).getBytes());
             }else{
-                out.println(buildResponseHeader("200", "OK", filename, file.length()));
+                out.write(buildResponseHeader("200", "OK", filename, file.length()).getBytes());
             }
             out.flush();
             }catch (Exception e) {
             e.printStackTrace();
             try {
-                out.write(buildResponseHeader("500", "Internal Server Error"));
+                out.write(buildResponseHeader("500", "Internal Server Error").getBytes());
                 out.flush();
             } catch (Exception e2) {
                 e2.printStackTrace();
