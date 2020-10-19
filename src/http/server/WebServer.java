@@ -13,16 +13,23 @@ import java.util.Scanner;
 
 public class WebServer {
 
-    protected static String EMPTY_RESSOURCE = "";
-    protected static String RESOURCE_PATH = "//doc/";
-    protected static String INDEX_PATH = "//doc/index.html";
+    protected static final String EMPTY_RESSOURCE = "";
+    protected static final String RESOURCE_PATH = "doc/";
+    protected static final String INDEX_PATH = "doc/index.html";
+    protected static final String GET = "GET";
+    protected static final String POST = "POST";
+    protected static final String PUT = "PUT";
+    protected static final String DELETE = "DELETE";
+    protected static final String HEAD = "HEAD";
+    protected static final List<String> HTTP_METHODS = new ArrayList<>(Arrays.asList(GET, POST, PUT, DELETE, HEAD));
+
+
 
     /**
      * WebServer constructor.
      */
     protected void start() {
         ServerSocket s;
-        List<String> HTTP_METHODS = new ArrayList<>(Arrays.asList("GET", "POST", "PUT", "DELETE", "HEAD"));
 
         System.out.println("Webserver starting up on port 10533");
         System.out.println("(press ctrl-c to exit)");
@@ -46,7 +53,8 @@ public class WebServer {
                 BufferedReader in = new BufferedReader(new InputStreamReader(
                         remote.getInputStream()));
                 BufferedOutputStream out = new BufferedOutputStream(remote.getOutputStream());
-
+                BufferedInputStream in_bis;
+                in_bis = new BufferedInputStream(remote.getInputStream());
                 // read the data sent. We basically ignore it,
                 // stop reading once a blank line is hit. This
                 // blank line signals the end of the client HTTP
@@ -86,19 +94,19 @@ public class WebServer {
                         out.write(buildResponseHeader("403", "Forbidden").getBytes());
                     } else {
                         switch (http_method) {
-                            case "GET":
+                            case GET:
                                 httpGET(out, resource);
                                 break;
-                            case "PUT":
-                                httpPUT(in, out, resource);
+                            case PUT:
+                                httpPUT(in_bis, out, resource);
                                 break;
-                            case "POST":
+                            case POST:
                                 httpPOST(in, out, resource);
                                 break;
-                            case "DELETE":
+                            case DELETE:
                                 httpDELETE(out, resource);
                                 break;
-                            case "HEAD":
+                            case HEAD:
                                 httpHEAD(out, resource);
                                 break;
                         }
@@ -154,7 +162,7 @@ public class WebServer {
      * otherwise -> 200 OK
      * exception -> 500 Internal error
      *
-     * @param out,      output flux to client socker
+     * @param out,      output flux to client socket
      * @param filename, filepath
      */
     protected void httpGET(BufferedOutputStream out, String filename) {
@@ -165,15 +173,14 @@ public class WebServer {
             } else {
                 out.write(buildResponseHeader("200", "OK", filename, file.length()).getBytes());
                 //Read file
-
                 BufferedInputStream fileIn = new BufferedInputStream(new FileInputStream(file));
                 byte[] reader = new byte[256];
                 int nbRead;
-                while((nbRead = fileIn.read(reader)) != -1)
-                {
+                while((nbRead = fileIn.read(reader)) != -1) {
                     out.write(reader, 0, nbRead);
                 }
                 fileIn.close();
+                out.flush();
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -198,21 +205,21 @@ public class WebServer {
      * @param out,      client socket output stream, to write response
      * @param filename, filepath
      */
-    protected void httpPUT(BufferedReader in, BufferedOutputStream out, String filename) {
+    protected void httpPUT(BufferedInputStream in, BufferedOutputStream out, String filename) {
         try {
             File file = new File(filename);
             boolean has_existed = file.exists();
             PrintWriter pw = new PrintWriter(file);
             pw.close();
-            PrintWriter fileOut = new PrintWriter(new FileOutputStream(file));
+            BufferedOutputStream fileOut = new BufferedOutputStream(new FileOutputStream(file));
 
             /**
              * @// TODO: 18/10/2020  doesn't entirely work
              */
-            int charRead;
-            while ((charRead = in.read()) > 0) {
-                System.out.println(charRead);
-                fileOut.write(charRead);
+            byte[] buffer = new byte[256];
+            while(in.available() > 0) {
+                int nbRead = in.read(buffer);
+                fileOut.write(buffer, 0, nbRead);
             }
             fileOut.flush();
             fileOut.close();
