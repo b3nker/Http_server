@@ -5,6 +5,7 @@ package http.server;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -53,8 +54,6 @@ public class WebServer {
                 BufferedReader in = new BufferedReader(new InputStreamReader(
                         remote.getInputStream()));
                 BufferedOutputStream out = new BufferedOutputStream(remote.getOutputStream());
-                BufferedInputStream in_bis;
-                in_bis = new BufferedInputStream(remote.getInputStream());
                 // read the data sent. We basically ignore it,
                 // stop reading once a blank line is hit. This
                 // blank line signals the end of the client HTTP
@@ -98,7 +97,7 @@ public class WebServer {
                                 httpGET(out, resource);
                                 break;
                             case PUT:
-                                httpPUT(in_bis, out, resource);
+                                httpPUT(in, out, resource);
                                 break;
                             case POST:
                                 httpPOST(in, out, resource);
@@ -129,6 +128,7 @@ public class WebServer {
     }
 
     protected String buildResponseHeader(String status, String message, String filename, long length) {
+        System.out.println("REPONSE : ");
         String header = "HTTP/1.0 " + status + ' ' + message + "\r\n";
         if (filename.endsWith(".html") || filename.endsWith(".htm"))
             header += "Content-Type: text/html";
@@ -144,7 +144,6 @@ public class WebServer {
             header += "Content-Type: text/css";
         else if (filename.endsWith(".pdf")) {
             header += "Content-Type: application/pdf";
-            System.out.println("Transaction sur fichier PDF");
         }
         else if (filename.endsWith(".odt"))
             header += "Content-Type: application/vnd.oasis.opendocument.text";
@@ -173,14 +172,8 @@ public class WebServer {
             } else {
                 out.write(buildResponseHeader("200", "OK", filename, file.length()).getBytes());
                 //Read file
-                BufferedInputStream fileIn = new BufferedInputStream(new FileInputStream(file));
-                byte[] reader = new byte[256];
-                int nbRead;
-                while((nbRead = fileIn.read(reader)) != -1) {
-                    out.write(reader, 0, nbRead);
-                }
-                fileIn.close();
-                out.flush();
+                byte[] bytes = Files.readAllBytes(file.toPath());
+                out.write(bytes);
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -205,7 +198,7 @@ public class WebServer {
      * @param out,      client socket output stream, to write response
      * @param filename, filepath
      */
-    protected void httpPUT(BufferedInputStream in, BufferedOutputStream out, String filename) {
+    protected void httpPUT(BufferedReader in, BufferedOutputStream out, String filename) {
         try {
             File file = new File(filename);
             boolean has_existed = file.exists();
@@ -217,10 +210,7 @@ public class WebServer {
              * @// TODO: 18/10/2020  doesn't entirely work
              */
             byte[] buffer = new byte[256];
-            while(in.available() > 0) {
-                int nbRead = in.read(buffer);
-                fileOut.write(buffer, 0, nbRead);
-            }
+
             fileOut.flush();
             fileOut.close();
             if (has_existed) {
