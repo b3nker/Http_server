@@ -11,6 +11,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
 
+import static java.lang.Integer.parseInt;
+
 
 public class WebServer {
 
@@ -25,19 +27,18 @@ public class WebServer {
     protected static final List<String> HTTP_METHODS = new ArrayList<>(Arrays.asList(GET, POST, PUT, DELETE, HEAD));
 
 
-
     /**
      * WebServer constructor.
      */
-    protected void start() {
+    protected void start(int port) {
         ServerSocket s;
 
-        System.out.println("Webserver starting up on port 10533");
+        System.out.println("Webserver starting up on port " + port);
         System.out.println("(press ctrl-c to exit)");
 
         try {
             // create the main server socket
-            s = new ServerSocket(3000);
+            s = new ServerSocket(port);
         } catch (Exception e) {
             System.out.println("Error: " + e);
             return;
@@ -51,8 +52,8 @@ public class WebServer {
                 // remote is now the connected socket
                 System.out.println("Connection, sending data.");
                 //Opening input/output binary stream of client socket
-                BufferedReader in = new BufferedReader(new InputStreamReader(
-                        remote.getInputStream()));
+                BufferedReader in = new BufferedReader(new InputStreamReader(remote.getInputStream()));
+                BufferedInputStream in_bis = new BufferedInputStream(remote.getInputStream());
                 BufferedOutputStream out = new BufferedOutputStream(remote.getOutputStream());
                 // read the data sent. We basically ignore it,
                 // stop reading once a blank line is hit. This
@@ -70,6 +71,7 @@ public class WebServer {
                  * - URL : returns GET /URL HTTP....
                  * THIS LOOP DOESN'T FETCH DATA THAT MAY BE CONTAIN IN BODY's REQUEST
                  */
+
                 while (str != null && !str.equals("")) {
                     str = in.readLine();
                     header += str + '\n';
@@ -97,7 +99,7 @@ public class WebServer {
                                 httpGET(out, resource);
                                 break;
                             case PUT:
-                                httpPUT(in, out, resource);
+                                httpPUT(in_bis, out, resource);
                                 break;
                             case POST:
                                 httpPOST(in, out, resource);
@@ -144,8 +146,7 @@ public class WebServer {
             header += "Content-Type: text/css";
         else if (filename.endsWith(".pdf")) {
             header += "Content-Type: application/pdf";
-        }
-        else if (filename.endsWith(".odt"))
+        } else if (filename.endsWith(".odt"))
             header += "Content-Type: application/vnd.oasis.opendocument.text";
         header += "\r\n";
         header += "Content-Length: " + length + "\r\n";
@@ -198,7 +199,7 @@ public class WebServer {
      * @param out,      client socket output stream, to write response
      * @param filename, filepath
      */
-    protected void httpPUT(BufferedReader in, BufferedOutputStream out, String filename) {
+    protected void httpPUT(BufferedInputStream in, BufferedOutputStream out, String filename) {
         try {
             File file = new File(filename);
             boolean has_existed = file.exists();
@@ -209,14 +210,13 @@ public class WebServer {
             /**
              * @// TODO: 18/10/2020  doesn't entirely work
              */
-            byte[] buffer = new byte[256];
-
+            System.out.println(in.read());
             fileOut.flush();
             fileOut.close();
             if (has_existed) {
                 out.write(buildResponseHeader("200", "OK", filename, file.length()).getBytes());
             } else {
-                out.write(buildResponseHeader("201", "Created",filename, file.length()).getBytes());
+                out.write(buildResponseHeader("201", "Created", filename, file.length()).getBytes());
             }
             out.flush();
         } catch (Exception e) {
@@ -290,7 +290,7 @@ public class WebServer {
             } else {
                 boolean deleted = file.delete();
                 if (deleted) {
-                    out.write(buildResponseHeader("204", "No Content",filename, file.length()).getBytes());
+                    out.write(buildResponseHeader("204", "No Content", filename, file.length()).getBytes());
                 } else {
                     out.write(buildResponseHeader("403", "Forbidden", filename, file.length()).getBytes());
                 }
@@ -309,19 +309,20 @@ public class WebServer {
 
     /**
      * Method that verify the existence of a resource.
-     * @param out, client socket output flux, to send header
+     *
+     * @param out,      client socket output flux, to send header
      * @param filename, filepath
      */
-    protected void httpHEAD(BufferedOutputStream out, String filename){
-        try{
+    protected void httpHEAD(BufferedOutputStream out, String filename) {
+        try {
             File file = new File(filename);
             if (!file.exists() || !file.isFile()) {
                 out.write(buildResponseHeader("404", "Not Found", filename, file.length()).getBytes());
-            }else{
+            } else {
                 out.write(buildResponseHeader("200", "OK", filename, file.length()).getBytes());
             }
             out.flush();
-            }catch (Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
             try {
                 out.write(buildResponseHeader("500", "Internal Server Error").getBytes());
@@ -338,7 +339,16 @@ public class WebServer {
      * @param args Command line parameters are not used.
      */
     public static void main(String[] args) {
-        WebServer ws = new WebServer();
-        ws.start();
+        if(args.length != 1){
+            System.out.println("WebServer <serverPort>");
+        }else{
+            try{
+                int port = parseInt(args[0]);
+                WebServer ws = new WebServer();
+                ws.start(port);
+            }catch (Exception e){
+                e.printStackTrace();
+            }
+        }
     }
 }
