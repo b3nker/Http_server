@@ -52,7 +52,7 @@ public class WebServer {
                 // remote is now the connected socket
                 System.out.println("Connection, sending data.");
                 //Opening input/output binary stream of client socket
-                BufferedReader in = new BufferedReader(new InputStreamReader(remote.getInputStream()));
+
                 BufferedInputStream in_bis = new BufferedInputStream(remote.getInputStream());
                 BufferedOutputStream out = new BufferedOutputStream(remote.getOutputStream());
                 // read the data sent. We basically ignore it,
@@ -71,49 +71,60 @@ public class WebServer {
                  * - URL : returns GET /URL HTTP....
                  * THIS LOOP DOESN'T FETCH DATA THAT MAY BE CONTAIN IN BODY's REQUEST
                  */
-
-                while (str != null && !str.equals("")) {
-                    str = in.readLine();
-                    header += str + '\n';
+                boolean right_syntax = false;
+                while (in_bis.available() > 0) {
+                    int cur = in_bis.read();
+                    header += (char) cur;
+                    if (header.contains("\r\n\r\n")) {
+                        right_syntax = true;
+                        break;
+                    }
                 }
-                System.out.println("REQUEST: \n" + header);
-                String[] header_decomposed = header.split(" ");
-                String http_method = header_decomposed[0];
+                if (right_syntax) {
+                    System.out.println("REQUEST: \n" + header);
+                    String[] header_decomposed = header.split(" ");
+                    String http_method = header_decomposed[0];
 
-                if (!HTTP_METHODS.contains(http_method)) {
-                    out.write(buildResponseHeader("501", "Not Implemented").getBytes());
-                    out.flush();
-                    remote.close();
-                } else {
-                    String resource = header_decomposed[1];
-                    resource = resource.substring(1); // To get rid of '/' character
-                    System.out.println(http_method + " " + resource);
-                    if (EMPTY_RESSOURCE.equals(resource)) {
-                        resource = INDEX_PATH;
-                    }
-                    if (!resource.startsWith(RESOURCE_PATH)) {
-                        out.write(buildResponseHeader("403", "Forbidden").getBytes());
+                    if (!HTTP_METHODS.contains(http_method)) {
+                        out.write(buildResponseHeader("501", "Not Implemented").getBytes());
+                        out.flush();
+                        remote.close();
                     } else {
-                        switch (http_method) {
-                            case GET:
-                                httpGET(out, resource);
-                                break;
-                            case PUT:
-                                httpPUT(in_bis, out, resource);
-                                break;
-                            case POST:
-                                httpPOST(in, out, resource);
-                                break;
-                            case DELETE:
-                                httpDELETE(out, resource);
-                                break;
-                            case HEAD:
-                                httpHEAD(out, resource);
-                                break;
+                        String resource = header_decomposed[1];
+                        resource = resource.substring(1); // To get rid of '/' character
+                        System.out.println(http_method + " " + resource);
+                        if (EMPTY_RESSOURCE.equals(resource)) {
+                            resource = INDEX_PATH;
                         }
+                        if (!resource.startsWith(RESOURCE_PATH)) {
+                            out.write(buildResponseHeader("403", "Forbidden").getBytes());
+                        } else {
+                            switch (http_method) {
+                                case GET:
+                                    httpGET(out, resource);
+                                    break;
+                                case PUT:
+                                    httpPUT(in_bis, out, resource);
+                                    break;
+                                case POST:
+                                    httpPOST(in_bis, out, resource);
+                                    break;
+                                case DELETE:
+                                    httpDELETE(out, resource);
+                                    break;
+                                case HEAD:
+                                    httpHEAD(out, resource);
+                                    break;
+                            }
+                        }
+                        out.flush();
+                        remote.close();
                     }
+                } else {
+                    System.out.println("REQUEST: \n" + header);
+                    out.write(buildResponseHeader("400", "Bad Request").getBytes());
                     out.flush();
-                    remote.close();
+                    out.close();
                 }
             } catch (Exception e) {
                 System.out.println("Error: " + e);
@@ -206,11 +217,14 @@ public class WebServer {
             PrintWriter pw = new PrintWriter(file);
             pw.close();
             BufferedOutputStream fileOut = new BufferedOutputStream(new FileOutputStream(file));
-
             /**
              * @// TODO: 18/10/2020  doesn't entirely work
              */
-            System.out.println(in.read());
+            byte[] buffer = new byte[256];
+            while (in.available() > 0) {
+                int nbRead = in.read(buffer);
+                fileOut.write(buffer, 0, nbRead);
+            }
             fileOut.flush();
             fileOut.close();
             if (has_existed) {
@@ -218,7 +232,6 @@ public class WebServer {
             } else {
                 out.write(buildResponseHeader("201", "Created", filename, file.length()).getBytes());
             }
-            out.flush();
         } catch (Exception e) {
             e.printStackTrace();
             try {
@@ -240,18 +253,18 @@ public class WebServer {
      * @param out,      client socket output stream, to write response
      * @param filename, filepath
      */
-    protected void httpPOST(BufferedReader in, BufferedOutputStream out, String filename) {
+    protected void httpPOST(BufferedInputStream in, BufferedOutputStream out, String filename) {
         try {
             File file = new File(filename);
             boolean has_existed = file.exists();
-            PrintWriter fileOut = new PrintWriter(new FileOutputStream(file, has_existed));
+            BufferedOutputStream fileOut = new BufferedOutputStream(new FileOutputStream(file, has_existed));
             /**
              * @// TODO: 18/10/2020  doesn't entirely work
              */
-            int charRead;
-            while ((charRead = in.read()) > 0) {
-                System.out.println(charRead);
-                fileOut.write(charRead);
+            byte[] buffer = new byte[256];
+            while (in.available() > 0) {
+                int nbRead = in.read(buffer);
+                fileOut.write(buffer, 0, nbRead);
             }
             fileOut.flush();
             fileOut.close();
@@ -260,7 +273,6 @@ public class WebServer {
             } else {
                 out.write(buildResponseHeader("201", "Created", filename, file.length()).getBytes());
             }
-            out.flush();
         } catch (Exception e) {
             e.printStackTrace();
             try {
@@ -295,7 +307,6 @@ public class WebServer {
                     out.write(buildResponseHeader("403", "Forbidden", filename, file.length()).getBytes());
                 }
             }
-            out.flush();
         } catch (Exception e) {
             e.printStackTrace();
             try {
@@ -321,7 +332,6 @@ public class WebServer {
             } else {
                 out.write(buildResponseHeader("200", "OK", filename, file.length()).getBytes());
             }
-            out.flush();
         } catch (Exception e) {
             e.printStackTrace();
             try {
@@ -339,14 +349,14 @@ public class WebServer {
      * @param args Command line parameters are not used.
      */
     public static void main(String[] args) {
-        if(args.length != 1){
+        if (args.length != 1) {
             System.out.println("WebServer <serverPort>");
-        }else{
-            try{
+        } else {
+            try {
                 int port = parseInt(args[0]);
                 WebServer ws = new WebServer();
                 ws.start(port);
-            }catch (Exception e){
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         }
