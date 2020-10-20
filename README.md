@@ -3,7 +3,7 @@ Introduction to HTTP protocol and HTTP servers by building a distributed and syn
 
 
 ## Targeted versions / Requirements
-Java 13
+Java 11
 
 
 ## Project architecture
