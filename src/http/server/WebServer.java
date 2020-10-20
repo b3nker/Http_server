@@ -157,6 +157,8 @@ public class WebServer {
             header += "Content-Type: image/jpg";
         else if (filename.endsWith(".mp3"))
             header += "Content-Type: audio/mp3";
+        else if (filename.endsWith(".gif"))
+            header += "Content-Type: image/gif";
         else if (filename.endsWith(".avi"))
             header += "Content-Type: video/x-msvideo";
         else if (filename.endsWith(".css"))
