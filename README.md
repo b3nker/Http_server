@@ -1,9 +1,17 @@
 # HTTP Server
 Introduction to HTTP protocol and HTTP servers by building a distributed and synchronous network communication system.
 
+
 ## Targeted versions / Requirements
 Java 13
 
+
+##Project architecture
+- /bin : .class files
+- /doc : javadoc + resources
+- /src : .java files
+
+(Note: make sure to correct filepath if you're on Windows)
 ## Installation
 Compile:
 ```
@@ -13,6 +21,8 @@ and run:
 ```
 TO WRITE
 ```
+
+
 ## Feature / Services
 HTTP Server implements the following HTTP methods:
 - GET
@@ -20,6 +30,7 @@ HTTP Server implements the following HTTP methods:
 - PUT
 - DELETE
 - HEAD
+
 
 ## Authors
 - BEL Corentin
