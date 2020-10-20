@@ -16,11 +16,11 @@ Java 11
 ## Installation
 Compile:
 ```
-TO WRITE
+javac -d bin src/*/*/*.java
 ```
 and run:
 ```
-TO WRITE
+java -classpath bin http.server.WebServer <port_number>
 ```
 
 
