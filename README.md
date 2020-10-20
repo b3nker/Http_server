@@ -9,6 +9,7 @@ Java 13
 ## Project architecture
 - /bin ->  .class files
 - /doc -> javadoc + resources
+- /lib -> .jar files
 - /src -> .java files
 
 (Note: make sure to correct filepath if you're on Windows)
