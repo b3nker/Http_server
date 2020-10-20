@@ -7,9 +7,9 @@ Java 13
 
 
 ##Project architecture
-- /bin : .class files
-- /doc : javadoc + resources
-- /src : .java files
+- /bin ->  .class files
+- /doc -> javadoc + resources
+- /src -> .java files
 
 (Note: make sure to correct filepath if you're on Windows)
 ## Installation
