@@ -1,7 +1,4 @@
-/**
- * HTTP server implementing GET, PUT, POST, DELETE and HEAD requests
- * @author GALERZA Javier, BEL Corentin, KERMANI Benjamin
- */
+
 
 package http.server;
 
@@ -15,6 +12,12 @@ import java.util.List;
 
 import static java.lang.Integer.parseInt;
 
+
+
+/**
+ * HTTP server implementing GET, PUT, POST, DELETE and HEAD requests
+ * @author GALERZA Javier, BEL Corentin, KERMANI Benjamin
+ */
 
 public class WebServer {
 
