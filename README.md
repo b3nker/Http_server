@@ -6,7 +6,7 @@ Introduction to HTTP protocol and HTTP servers by building a distributed and syn
 Java 13
 
 
-##Project architecture
+## Project architecture
 - /bin ->  .class files
 - /doc -> javadoc + resources
 - /src -> .java files
