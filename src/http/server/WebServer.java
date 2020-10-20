@@ -34,7 +34,7 @@ public class WebServer {
 
     /**
      * WebServer constructor
-     * @param port , port number on which ServerSocket will be created
+     * @param port port number on which ServerSocket will be created
      */
     protected void start(int port) {
         ServerSocket s;
@@ -175,9 +175,9 @@ public class WebServer {
 
     /**
      * HTTP method that returns resource to client, allowing him to visualize the resource he asked for. (
-     * filename doesn't exist -> 404 Not found
-     * otherwise -> 200 OK
-     * exception -> 500 Internal error
+     * filename doesn't exist : 404 Not found
+     * otherwise : 200 OK
+     * exception : 500 Internal error
      * @param out output flux to client socket
      * @param filename filepath
      */
@@ -207,9 +207,9 @@ public class WebServer {
      * HTTP method that creates a resource (or replace an existing one).
      * If file doesn't exist, creates it using data from request's body message.
      * If file is old, replaces it (i.e, erase previous data) using data from request's body message.
-     * File is old -> 200, OK
-     * File is new -> 201, Created
-     * exception -> 500, Internal error
+     * File is old : 200, OK
+     * File is new : 201, Created
+     * exception : 500, Internal error
      *
      * @param in client socket input stream, to read body message
      * @param out client socket output stream, to write response
@@ -248,9 +248,9 @@ public class WebServer {
 
     /**
      * HTTP method that replaces an existing resource (or creates one )
-     * If file exists -> append at the end of file's data request's body message -> 200, OK
-     * If file doesn't exist-> creates a new file -> 201, Created
-     * exception -> 500, Internal error
+     * If file exists : append at the end of file's data request's body message : 200, OK
+     * If file doesn't exist: creates a new file : 201, Created
+     * exception : 500, Internal error
      * @param in client socket input stream, to read body message
      * @param out client socket output stream, to write response
      * @param filename filepath
@@ -286,12 +286,12 @@ public class WebServer {
 
     /**
      * HTTP method that deletes a file given its filepath.
-     * If deleted -> 204, No Content
-     * If can't delete -> 403, Forbidden
-     * If not found -> 404, Not Found
-     * exception -> 500, Internal error
-     * @param out, client socket output stream, to return header
-     * @param filename, filepath
+     * If deleted : 204, No Content
+     * If can't delete : 403, Forbidden
+     * If not found : 404, Not Found
+     * exception : 500, Internal error
+     * @param out client socket output stream, to return header
+     * @param filename filepath
      */
     protected void httpDELETE(BufferedOutputStream out, String filename) {
         try {
@@ -320,8 +320,8 @@ public class WebServer {
 
     /**
      * HTTP method returns headers that would be returned if specified resource was requested with HTTP GET.
-     * @param out, client socket output flux, to send header
-     * @param filename, filepath
+     * @param out client socket output flux, to send header
+     * @param filename filepath
      */
     protected void httpHEAD(BufferedOutputStream out, String filename) {
         try {
@@ -345,7 +345,7 @@ public class WebServer {
 
     /**
      * Start the application.
-     * @param args, port number
+     * @param args port number
      */
     public static void main(String[] args) {
         if (args.length != 1) {
