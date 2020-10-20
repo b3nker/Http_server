@@ -132,6 +132,7 @@ public class WebServer {
         String header = "HTTP/1.0 " + status + ' ' + message + "\r\n";
         header += "Server: Bot\r\n";
         header += "\r\n";
+        System.out.println("REPONSE : ");
         System.out.println(header);
         return header;
     }
@@ -147,30 +148,30 @@ public class WebServer {
      * @return response header as string
      */
     protected String buildResponseHeader(String status, String message, String filename, long length) {
-        System.out.println("REPONSE : ");
         String header = "HTTP/1.0 " + status + ' ' + message + "\r\n";
+        String header_CRLF = "\r\n";
         if (filename.endsWith(".html") || filename.endsWith(".htm"))
-            header += "Content-Type: text/html";
+            header += "Content-Type: text/html" + header_CRLF;
         else if (filename.endsWith(".mp4"))
-            header += "Content-Type: video/mp4";
+            header += "Content-Type: video/mp4" + header_CRLF;
         else if (filename.endsWith(".jpeg") || filename.endsWith(".png"))
-            header += "Content-Type: image/jpg";
+            header += "Content-Type: image/jpg" + header_CRLF;
         else if (filename.endsWith(".mp3"))
-            header += "Content-Type: audio/mp3";
+            header += "Content-Type: audio/mp3" + header_CRLF;
         else if (filename.endsWith(".gif"))
-            header += "Content-Type: image/gif";
+            header += "Content-Type: image/gif" + header_CRLF;
         else if (filename.endsWith(".avi"))
-            header += "Content-Type: video/x-msvideo";
+            header += "Content-Type: video/x-msvideo" + header_CRLF;
         else if (filename.endsWith(".css"))
-            header += "Content-Type: text/css";
+            header += "Content-Type: text/css" + header_CRLF;
         else if (filename.endsWith(".pdf")) {
-            header += "Content-Type: application/pdf";
+            header += "Content-Type: application/pdf" + header_CRLF;
         } else if (filename.endsWith(".odt"))
-            header += "Content-Type: application/vnd.oasis.opendocument.text";
-        header += "\r\n";
+            header += "Content-Type: application/vnd.oasis.opendocument.text" + header_CRLF;
         header += "Content-Length: " + length + "\r\n";
         header += "Server: Bot\r\n";
         header += "\r\n";
+        System.out.println("REPONSE : ");
         System.out.println(header);
         return header;
     }
